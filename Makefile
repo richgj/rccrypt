@@ -12,7 +12,7 @@ HFILES = $(II)rccrypt.h
 
 #define your objects
 RCC_OBJECTS = $(src)rcc.o $(src)bail.o $(src)random_char.o \
-	$(src)remainder.o $(src)rotate.o $(src)debug.o
+	$(src)get_remainder.o $(src)rotate.o $(src)debug.o
 	
 RCCRYPT_OBJECTS = $(src)rccrypt.o $(src)bail.o $(src)debug.o
 

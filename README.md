@@ -1,7 +1,7 @@
 # rccrypt
 RC-Crypt keeps your data safe. It is an easy to use command line program that encrypts your data.
 
-Copyright (C) 2001-6 R.G.Jones, Eric Shorkey
+Copyright (C) 2001-17 R.G.Jones, Eric Shorkey
 
 ## How to use this program.
 

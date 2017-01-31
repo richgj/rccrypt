@@ -25,9 +25,9 @@ File format:
 The encoded output is an integer number of 16 byte blocks.
 The first block is pseudo random data.
 The second block to the last but one block are encoded data.
-If the data does not fill the last but one block, it is padded 
+If the data does not fill the last but one block, it is padded
 with pseudo random data to make it sixteen bytes.
-The last block is pseudo random data, apart from the lowest 
+The last block is pseudo random data, apart from the lowest
 four bits of the first byte. These are the number of bytes
 used to pad the last but one byte (ie 0-15).
 ********************************************************************************/
@@ -115,15 +115,15 @@ RCC_OPTIONS *rcc_options;	/* holds the data to be written to the shared memory *
 /* get the key and attach the memory */
 
 	shm_key = shmget(getpgrp(), sizeof(RCC_OPTIONS), SHM_RDONLY );
-	
+
 	if (shm_key < 0)
 	{
 		bail("Failed to create shared memory area");
 	}
-	
+
 /* attach the memory here */
 	rcc_options = shmat(shm_key, NULL, 0);
-	
+
 	if (rcc_options < 0)
 	{
 		bail("Unable to attach shared memory");
@@ -133,7 +133,7 @@ RCC_OPTIONS *rcc_options;	/* holds the data to be written to the shared memory *
 	num_chars_in_keystring = rcc_options->length;
 	rounds = rcc_options->rounds;
 	pseudo_random = rcc_options->pseudo;
-		
+
 	/* sort out crypt option */
 	if(rcc_options->crypt)
 	{
@@ -143,10 +143,10 @@ RCC_OPTIONS *rcc_options;	/* holds the data to be written to the shared memory *
 	{
 		crypt_option = decrypt_it;
 	}
-	
+
 	/* copy the key */
 	strncpy(k_chars, rcc_options->key, MAX_BYTES_IN_KEY + 1);
-		
+
 	/* copy the infile */
 	if (strncmp("STDIN", rcc_options->infile, 5) == 0)
 	{
@@ -170,7 +170,7 @@ RCC_OPTIONS *rcc_options;	/* holds the data to be written to the shared memory *
 		outfile_buff[MAX_FILE] = '\0';
 		outfile = outfile_buff;
 	}
-	
+
 /* unattach from the memory */
 	shmdt((void *)rcc_options);
 
@@ -189,7 +189,7 @@ The use atoul(base 16) to convert the char array 8 chars at a time into the fina
 ********************************************************************************/
 	num_lls_in_key=num_chars_in_keystring/BLOCK_SIZE;
 
-	if (remainder(num_chars_in_keystring,16)>0)
+	if (get_remainder(num_chars_in_keystring,16)>0)
 		num_lls_in_key +=1;
 
 	c = num_lls_in_key;
@@ -199,16 +199,16 @@ The use atoul(base 16) to convert the char array 8 chars at a time into the fina
 /*create the padded array*/
 
 	padded_keystring = (UBYTE *)malloc(num_chars_in_padded_keystring+1);
-	if (NULL == padded_keystring) 
+	if (NULL == padded_keystring)
 		bail("Malloc error:padded_keystring");
 
 /*fill the array with zeros then copy the key to the end of it*/
 
 	memset(padded_keystring, '0', num_chars_in_padded_keystring);
-	
+
 /*make sure it finishes with a null char so can use string fns on it*/
 	padded_keystring[num_chars_in_padded_keystring] = '\0';
-	strncpy(padded_keystring + 
+	strncpy((char *)padded_keystring +
 			num_chars_in_padded_keystring -
 			num_chars_in_keystring,
 			k_chars,
@@ -217,7 +217,7 @@ The use atoul(base 16) to convert the char array 8 chars at a time into the fina
 /*create the long long array for the key*/#
 
 	K = (ULLONG *) malloc( num_lls_in_key * 8 );
-	if ( NULL == K) 
+	if ( NULL == K)
 		bail("Malloc error:K");
 
 /*fill it with zeros*/
@@ -228,34 +228,34 @@ The use atoul(base 16) to convert the char array 8 chars at a time into the fina
 
 	for (i=0,j=0; i<num_chars_in_padded_keystring; i+=8,j+=4)
 	{
-		strncpy(sub_array,padded_keystring+i,8);
+		strncpy((char *)sub_array,(char *)padded_keystring+i,8);
 		sub_array[8]='\0';
 
 		errno = 0;
-		temp = strtoul(sub_array, &tail, BLOCK_SIZE);
-		if (tail != (char *)(sub_array+8)) 
+		temp = strtoul((char *)sub_array, &tail, BLOCK_SIZE);
+		if (tail != (char *)(sub_array+8))
 			bail("Key must be a hex number");
 
 		/*Put key values in network order*/
 		temp = htonl( temp );
 
-		if(errno) 
+		if(errno)
 			bail("Key: overflow on conversion");
-			
+
 		/*copy the ULONG into the string*/
 		memcpy(((char *)K)+j, (char *)&temp, 4);
 	}
 
-	
+
 /********************************************************************************/
 /*Now fill the subkeys with pseudo random bits*/
 
 	t = 2 * (rounds+1);
-	
+
 	S = (ULLONG *)malloc(t*8);
-	if (NULL == S) 
+	if (NULL == S)
 		bail("Malloc Error:S");
-		
+
 	S[0] = P64;
 	for(i=1; i<t; i++)
 	{
@@ -266,15 +266,15 @@ The use atoul(base 16) to convert the char array 8 chars at a time into the fina
 	for (i=0; i<t; i++)
 	{
 		S[i] = htonll(S[i]);
-		uprint ("Subkey",S[i]);	
+		uprint ("Subkey",S[i]);
 	}
 
 	for (i=0; i<c; i++)
 	{
 		uprint("Host order key",ntohll(K[i]));
-		uprint("Network order key",K[i]);	
+		uprint("Network order key",K[i]);
 	}
-		
+
 	/*Mangle the subkeys with the Key*/
 	k = j = 0;
 	A = B = 0;
@@ -288,19 +288,19 @@ The use atoul(base 16) to convert the char array 8 chars at a time into the fina
 		if (++j >= t) j=0;
 		if (++k >= c) k=0;
 	}
-	
+
 	/*Put the mangled keys into host order*/
 	for (i=0; i<t; i++)
 	{
 		S[i] = ntohll(S[i]);
 	}
-	
+
 	/*Print out mangled keys*/
 	for (i=0; i<t; i++)
 	{
 		uprint("Mangled Subkey=",S[i]);
 	}
-	
+
 /********************************************************************************/
 /*Determine where our input will be from*/
 	if (NULL == infile)
@@ -311,10 +311,10 @@ The use atoul(base 16) to convert the char array 8 chars at a time into the fina
 	else
 	{
 		input=fopen(infile,"r");
-		if(NULL == input) 
+		if(NULL == input)
 			bail("Failed to open input file");
 	}
-	
+
 /********************************************************************************/
 /*Determine where the output goes to*/
 	if (NULL == outfile)
@@ -325,10 +325,10 @@ The use atoul(base 16) to convert the char array 8 chars at a time into the fina
 	else
 	{
 		output = fopen(outfile,"w");
-		if (NULL == output) 
+		if (NULL == output)
 			bail("Failed to open output file");
 	}
-	
+
 /*********************************************************************************/
 /* Set the "xor block"to zeros in case the system doesn't do it for us */
 for (i=0; i< BLOCK_SIZE; i++)
@@ -345,7 +345,7 @@ this program uses random printable chars for padding
 	pad_value = 0;
 	firstblock = TRUE;
 	secondblock=FALSE;
-	
+
 	one_char=getc(input);
 
 	if ((firstblock) && (crypt_option != decrypt_it))
@@ -356,7 +356,7 @@ this program uses random printable chars for padding
 		* This will be used to
 		* xor each block of data with a previous block if requested
 		*/
-		/*Fill the buffer with random data*/	
+		/*Fill the buffer with random data*/
 		for (i=0; i<BLOCK_SIZE; i++)
 			buffer[i] = get_random_char();
 
@@ -370,18 +370,18 @@ this program uses random printable chars for padding
 
 		firstblock=FALSE;
 	}
-				
+
 	while(one_char!=EOF)
 	{
 		ungetc(one_char,input);/*put back the character as it isn't an eof*/
 		/*
 		* Read BLOCK_SIZE bytes of data into the buffer
-		* If we don't get BLOCK_SIZE bytes, pad the buffer with 
+		* If we don't get BLOCK_SIZE bytes, pad the buffer with
 		* random printable characters to overwrite previous values.
 		* When decoding, we will always have BLOCK_SIZE bytes.
 		*/
 		rd_count = fread(buffer, 1, BLOCK_SIZE, input);
-		
+
 		if (rd_count < BLOCK_SIZE)
 		{
 			pad_value = BLOCK_SIZE - rd_count;
@@ -391,9 +391,9 @@ this program uses random printable chars for padding
 
 		/*Do the encryption/decryption*/
 		crypt_option (buffer);
-		
+
 		one_char=getc(input);
-			
+
 		/*Decide whether to print out all the data or not*/
 		if (crypt_option == decrypt_it)
 		{
@@ -406,9 +406,9 @@ this program uses random printable chars for padding
 				/*
 				* Get the pad value
 				* buffer should be in network byte order
-				*/	
+				*/
 				memcpy (&pad_value, buffer, 1);
-				
+
 				/*throw away the top 4 bits*/
 				pad_value &= 0xf;
 				to_print = BLOCK_SIZE - pad_value;
@@ -417,7 +417,7 @@ this program uses random printable chars for padding
 			{
 				to_print = BLOCK_SIZE;
 			}
-			
+
 			/*We only start printing output when we get to the third block*/
 			if ((!firstblock) && (!secondblock))
 			{
@@ -433,7 +433,7 @@ this program uses random printable chars for padding
 				else
 					secondblock = TRUE;
 			}
-			
+
 		}
 		else /*encoding*/
 		{
@@ -441,14 +441,14 @@ this program uses random printable chars for padding
 			count = fwrite (buffer, 1, BLOCK_SIZE, output);
 			if (count != BLOCK_SIZE)
 				bail("Error in writing to output stream-encoding");
-			
+
 			if (EOF == one_char) /*if true, we are on the last  block*/
 			{
 				/*Output the padding number*/
-				/*Fill the buffer with random data*/	
+				/*Fill the buffer with random data*/
 				for (i=0; i<BLOCK_SIZE; i++)
 					buffer[i] = get_random_char();
-				
+
 				/*Put the pad size into the correct bits of the first byte*/
 				pad_value &= 0xf;	/*lower 4 bits*/
 				*buffer &= 0xf0;	/*upper 4 bits*/
@@ -456,7 +456,7 @@ this program uses random printable chars for padding
 
 				/*Do the same encoding as before*/
 				crypt_option(buffer);
-				
+
 				/*now output the data we worked on*/
 				count=fwrite(buffer, 1, BLOCK_SIZE, output);
 				if (count != BLOCK_SIZE)
@@ -469,7 +469,7 @@ this program uses random printable chars for padding
 		*/
 		memcpy (previous_block, buffer, BLOCK_SIZE);
 	}
-	
+
 /********************************************************************************/
 /*Close file handlers to ensure all data is flushed*/
 if (input != stdin) fclose(input);
@@ -514,7 +514,7 @@ int i;
 	/*Convert buffer back to network order*/
 	*L = htonll(*L);
 	*R = htonll(*R);
-	
+
 	if (pseudo_random)
 	{
 		for (i=0; i<BLOCK_SIZE; i++)
@@ -524,7 +524,7 @@ int i;
 		/* remember the encrypted block */
 		memcpy (xor_block, buffer, BLOCK_SIZE);
 	}
-	
+
 	return;
 }
 
@@ -541,16 +541,16 @@ char *temp_block = (char *)temp_array;
 	{
 		/* The buffer is the encrypted data used to xor */
 		memcpy(temp_block, buffer, BLOCK_SIZE);
-	
+
 		for (i=0; i<BLOCK_SIZE; i++)
 		{
 			buffer[i] ^= xor_block[i];
 		}
-		
+
 		/* remember the data for the next xor */
 		memcpy(xor_block, temp_block, BLOCK_SIZE);
 	}
-	
+
 	/*now we have sixteen bytes ready to work on*/
 	/*split it into two ULLONGs, left and right*/
 
@@ -576,4 +576,3 @@ char *temp_block = (char *)temp_array;
 
 	return;
 }
-

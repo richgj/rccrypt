@@ -3,7 +3,7 @@
 This program is part of the RC-Crypt suite
 that implements rc5 128 bit block cipher.
 
-Copyright (C) 2001-5 R.G.Jones
+Copyright (C) 2001-17 R.G.Jones
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -45,7 +45,7 @@ typedef enum boolean {FALSE,TRUE} BOOLEAN;
 #define htonll(x) (x)
 #define ntohll(x) (x)
 #else
-#ifdef  _BIG_ENDIAN 
+#ifdef  _BIG_ENDIAN
 #define htonll(x) (x)
 #define ntohll(x) (x)
 #else
@@ -74,7 +74,7 @@ typedef enum boolean {FALSE,TRUE} BOOLEAN;
 extern void uprint (char *name, ULLONG thing);
 #else
 #define uprint(A,B) ((void)0)
-#endif 
+#endif
 
 /******************************/
 /*More functions defined elsewhere*/
@@ -82,7 +82,7 @@ extern ULLONG lrotate(ULLONG num,ULLONG n);
 extern ULLONG rrotate(ULLONG num,ULLONG n);
 extern char get_random_char();
 extern void bail (char *c);
-extern ULLONG remainder(ULLONG numerator, ULLONG divisor);
+extern ULLONG get_remainder(ULLONG numerator, ULLONG divisor);
 
 #define max(A,B) (((A) > (B)) ? (A) : (B) )
 
@@ -98,4 +98,3 @@ typedef struct options {
 	char outfile[MAX_FILE + 1];	/* output file (=STDOUT if that's what's wanted) */
 } RCC_OPTIONS;
 #endif
-

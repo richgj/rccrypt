@@ -25,12 +25,12 @@ Email:rich@ricksoft.co.uk
 
 #include "rccrypt.h"
 
-/*give the remainder of an integer division*/
-ULLONG remainder(ULLONG numerator, ULLONG divisor)
+/*give the get_remainder of an integer division*/
+ULLONG get_remainder(ULLONG numerator, ULLONG divisor)
 {
 	if (divisor == 0)
 	{
-		bail("Divide by zero error in 'remainder'");
+		bail("Divide by zero error in 'get_remainder'");
 	}
 	while (numerator >= divisor)
 	{

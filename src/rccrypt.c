@@ -73,7 +73,7 @@ void sig_chld()
 	/*
 	* Exit the parent as soon as the child is completed.
 	* For some reason, sigchld can arrive BEFORE sigusr1.
-	* If this happens, we need to kill the alarm or the 
+	* If this happens, we need to kill the alarm or the
 	* system will hang.
 	*/
 	alarm(0);
@@ -183,9 +183,9 @@ setsid();
 				/*set the number of rounds*/
 				errno=0;
 				rounds=strtol(r_chars,&tail,10);
-				if ((tail==r_chars) 
-					|| (errno) 
-					|| (rounds>255) 
+				if ((tail==r_chars)
+					|| (errno)
+					|| (rounds>255)
 					|| (rounds<0))
 					bail("ERROR: Rounds must be 0..255");
 				break;
@@ -197,7 +197,7 @@ setsid();
 				waiting = TRUE;
 				break;
 			case '?':
-				/* 
+				/*
 				* The unknown case deliberate falls
 				* through to the default case
 				*/
@@ -209,7 +209,7 @@ setsid();
 				fprintf(stderr,"\nSee README file for further information\n");
 				return 1;
 		}
-		
+
 /* e_chars should over-ride k_chars, since it is more secure */
  	if( NULL != e_chars)
 	{
@@ -226,16 +226,16 @@ setsid();
 			{
 				/*find the user's home directory*/
 				user_data=getpwuid(getuid());
-				if (user_data == NULL) 
+				if (user_data == NULL)
 					bail("Unable to determine user's home directory");
 
 				if( user_data->pw_dir != NULL)
 				{
-					if (chdir(user_data->pw_dir)) 
+					if (chdir(user_data->pw_dir))
 						bail("Unable to change directory");
 					keyfile = fopen(".rccrypt_key","r");
 					/*return to the original directory*/
-					if (chdir(my_cwd)) 
+					if (chdir(my_cwd))
 						bail("Unable to change directory");
 				}
 			}
@@ -258,7 +258,7 @@ setsid();
 			* which is a BAD THING!
 			*/
 			rd_count = fread (key_buffer,1,MAX_BYTES_IN_KEY,keyfile);
-			
+
 			/*
 			* Work backwards through the array replacing
 			* End Of Line character(s) with End Of String
@@ -266,7 +266,7 @@ setsid();
 			*/
 			while (--rd_count>=0)
 			{
-				if (0xA == (key_buffer[rd_count]) || 
+				if (0xA == (key_buffer[rd_count]) ||
 					(0xD == key_buffer[rd_count]))
 				{
 					key_buffer[rd_count] = '\0';
@@ -306,30 +306,30 @@ setsid();
 
 /********************************************************************************/
 /* open the shared memory area based on the pid of this process */
-	
+
 /* first, get a key to use */
 	shm_key = shmget(getpgrp(), sizeof(RCC_OPTIONS), IPC_CREAT|0600);
-	
+
 	if (shm_key < 0)
 	{
 		bail("Failed to create shared memory area");
 	}
-	
+
 /* attach the memory here */
 	rcc_options = shmat(shm_key, NULL, 0);
-	
+
 	if (rcc_options < 0)
 	{
 		bail("Unable to attach shared memory");
 	}
-	
+
 /********************************************************************************/
 /* fill the rcc_options structure */
 	rcc_options->length = num_chars_in_keystring;
 	rcc_options->rounds = rounds;
 	rcc_options->crypt = crypt;
 	rcc_options->pseudo = pseudo_random;
-	
+
 	/* copy the key */
 	strncpy(rcc_options->key, k_chars, MAX_BYTES_IN_KEY + 1);
 
@@ -337,50 +337,50 @@ setsid();
 	if (NULL == infile)
 	{
 		/* we will be using stdin */
-		sprintf(rcc_options->infile, "STDIN"); 
+		sprintf(rcc_options->infile, "STDIN");
 	}
 	else
 	{
 		strncpy(rcc_options->infile, infile, MAX_FILE);
 		rcc_options->infile[MAX_FILE] = '\0';
 	}
-	
+
 	/* copy the outfile */
 	if (NULL == outfile)
 	{
 		/* we will be using stdin */
-		sprintf(rcc_options->outfile, "STDOUT"); 
+		sprintf(rcc_options->outfile, "STDOUT");
 	}
 	else
 	{
 		strncpy(rcc_options->outfile, outfile, MAX_FILE);
 		rcc_options->outfile[MAX_FILE] = '\0';
 	}
-	
+
 /* set an alarm to wait for the child process */
 	alarm(5);
-	
+
 /* fork a new process */
 
 	pid = fork();
-	
+
 	if (-1 == pid)
 	{
 		bail ("ERROR: Unable to fork");
 	}
-	
+
 	if (0 == pid)
 	{
 		/* this is the child */
 		/* rcc must be found in the PATH */
-		execlp("rcc", NULL);
+		execlp("rcc", "rcc", NULL);
 		/* note - it should never return from this call */
 		bail("Failed to start rcc as child process");
 	}
 
 /* continue as the parent */
-	
-/* 
+
+/*
 * Wait for a signal from the child to say it has the data
 * Check the sigusr1 hasn't already reset the previous alarm.
 */
@@ -394,11 +394,11 @@ setsid();
 		/* Wait for the sigusr1 */
 		pause();
 	}
-		
+
 /* The child has read the data now */
 	memset(rcc_options, 0, sizeof(RCC_OPTIONS));
 	shmdt((void *)rcc_options);
-	
+
 /* Wait for the child process to complete before exiting */
 	if ((waiting) && (!had_sigchld))
 	{
@@ -408,4 +408,3 @@ setsid();
 	return 0;
 
 }
-
