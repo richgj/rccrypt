@@ -1,0 +1,203 @@
+.TH rccrypt 1 "Aug 2003"
+.SH NAME
+rccrypt - Encrypt or decrypt the input given to it according
+to the rc5 Algorithm as described by RSA Laboratories.
+
+.SH SYNOPSIS
+.HP
+.B rccrypt   
+[-v] [-d] [-p] [-r rounds] [-k key | -f file | -e env_var] [-i infile] [-o outfile] [-w]
+
+.SH DESCRIPTION
+rccrypt is designed to make it easy for you to protect your data using a 
+strong form of encryption. It has many options to allow it to be 
+used in scripts as well as from the command line.
+
+.SH PARAMETERS
+.IP -v
+Print version information and exit.
+
+.IP -d
+This will decrypt the input. Default is to encrypt.
+
+.IP -p
+If this flag is included, each data block will be xor-ed with the 
+previously encrypted block. Since the first block is a created using 
+pseudo-random characters, encrypting a file with the same key will give a 
+totally different output each time. The file will still be decrypted
+successfully, as long as the -p flag is used.
+.br
+This does not add to the inherent security of the encryption, but may
+be desirable in some instances. It does not significantly add to the 
+time it takes to encrypt/decrypt a file.
+
+.IP -k
+"key" is a hex number that is the key used to encrypt or decrypt
+the input. If no key, keyfile or environment variable
+is given on the command line, the program
+will look in the user's home directory for a file called
+".rccrypt_key". This should contain only the hex number and
+nothing else. For security it should be given permissions such
+that no-one but the owner can read or edit it (ie 600).
+A key can be up to 255 bits (64 digits in hex).
+If the program cannot find a key, from a file, environment variable
+or the command line, it will fail.
+.br
+Do not preceed the key with 0x.
+.br
+The longer a key is, the harder it is to crack. 
+(Try at least 64 bits, equivalent to 16 characters.)
+
+.IP -f
+"keyfile" is the name of a file that contains an Ascii representation
+of the key you wish to use. This is recommended for normal use, so you
+can use many different keys using an easy to remember filename
+rather than typing in a separate key each time. It is suggested
+that such files be given 600 permissions and/or stored on removable media
+to lower the risk of a third party getting the details.
+.br
+The -k option will
+always override the -f option if both are given.
+
+.IP -e
+"env_var" is the name of an environment variable that is set to the value
+of the key you wish to use. The environment variable is removed so it is not
+visible in the /proc filesytem of the "rcc" process that does the encryption,
+but remains in the start environment.
+.br
+The -e option will override both the -k and -f options.
+
+.IP -r
+"rounds" is the number of passes each block goes through when
+encrypted/decrypted. It defaults to one hundred. Valid range is 0-255.
+The higher the number, the more difficult it is to crack.
+
+.IP -i
+"infile" is an optional file for input. If not given, it will
+take input from the standard input. This means data can be typed
+in directly or piped from another command.
+	
+.IP -o
+"outfile" is an optional file for output. If not given, it will
+default to the standard output, so it can be viewed on the screen
+(not recommended during encryption) or piped/redirected elsewhere.
+
+.IP -w
+rccrypt always does the actual encryption/decryption by using another
+program called "rcc". Normally rccrypt will return immediately, leaving
+rcc running in the background. There is no printout to tell you rcc has
+finished running. This is a security feature so that the 
+options you use are not visible to the casual user. If you want rccrypt
+to wait for rcc to finish before returning, add the -w flag.
+This is not recommended as any user will be able to view the options
+from the command line during the actual encryption. This is a 
+problem mainly for large files.
+
+
+.SH EXAMPLES
+.HP
+rccrypt -r 16 -k 12345
+.br
+Take input from the command line, ended by a ctrl-d, and encrypt it
+using key 0x0000000000012345. Pass over the data 16 times and put the
+output to the screen.
+
+.HP
+rc5 -r 1 -k abc123589dfdf -i my_data.c -o my_data.rc5
+.br
+Take input from my_data.c, encrypt it using key 0x00abc123589dfdfc
+with one pass. Put the output into file my_data.rc5.
+
+.HP
+cat my_data.rc5 | rccrypt -d -r 12 -k 123456789abcdef | mail rich@foo.bar
+.br
+Take the data from my_data.rc5 and decode it using key
+0x123456789abcdef, passing over the data 12 times. Mail the result
+to rich@foo.bar.
+
+.HP
+rccrypt -i infile -o outfile
+.br
+Take the data from infile, use the key defined in the home directory
+of the user, passing over the data the default number of
+times and put the output into
+the file "outfile".
+
+.SH "SECURITY"
+This is not the correct place to teach about security, but what follows are a 
+few suggestions that will help to make things more secure for you. If you need
+to be really serious, there is plenty of information available on the web.
+.HP
+If someone can get root control over your machine, they will probably be able to
+find your keys with a bit of work. Try not to make it easy for them.
+.HP
+If you are using files to store the keys, start the filenames with a "." and
+store them in a directory that begins with a ".". This won't stop a determined
+user, but makes them harder to find. Don't give them names like "richard.key"
+as that is a bit of a giveaway! Make sure they you are the only user with 
+read/write permissions on these files. If you can, keep the keys on a floppy
+or USB disk, and only put it into the machine when you need to encrypt/decrypt.
+.HP
+Most shells put all your command lines into a file in your
+home directory (~/.bash_history is the default for a bash shell).
+A root user will be able to read these. Read the man pages on your shell to find
+ways around this (eg for bash: modify the environment variables HISTCONTROL,
+HISTIGNORE, HISTFILESIZE and HISTSIZE)
+
+.HP
+If at all possible, use environment variables to pass the keys to rccrypt. Even
+better is to read these from a secure database via ssh, then nothing is stored 
+on the local machine.
+
+.SH "ERROR MESSAGES"
+.HP
+You must supply a key
+.br
+The program has been unable to find a key on the command line, in the file
+you gave it, in the environment or in your home directory. Check that you 
+are providing a key.
+
+.HP
+Key must be a hex number
+.br
+When trying to use the key,  it has discovered values in it that are not 0..9
+or a-f. Check the value of the key.
+
+.HP
+Failed to open [ input | output ] file
+.br
+The file does not exist, is not in the path you gave it or you do not have
+the correct read/write permissions. If all these are correct, there is something
+else wrong in your operating system.
+
+.HP
+ERROR: Rounds must be 0..255
+.br
+You have given a value with the -r flag that is out of bounds.
+
+.HP
+ERROR: Alarm Signal raised
+.br
+The program has not been shut down by the child process which means the child process
+has failed somehow. This line should be preceeded with a reason for the failure.
+It is most likely that the "rcc" program is not in your PATH.
+
+.HP
+Error in writing to output stream-<place in program>
+.br
+This can occur if the data is invalid-decoding a file created by an
+earlier version of the software or encoded on a machine that has not been
+tested. If this occurs, please contact the author with details.
+
+.HP
+Other errors
+.br
+Please contact the author if you see any other errors.
+
+.SH AUTHOR
+Richard Jones
+.br
+rich@ricksoft.co.uk
+.br
+I don't always check this account regularly, so please bear with me if it takes a 
+while to respond.
