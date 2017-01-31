@@ -10,7 +10,7 @@ Copyright (C) 2001-17 R.G.Jones, Eric Shorkey
 				make
 	If you wish to add options, feel free to do so :-)
 
-2.	Copy both the rccrypt and the rcc
+2.	Copy both the rccrypt and the rccrypt_bg
 	program to somewhere you can run it.
 	Find the places you could copy it to using
 		echo $PATH

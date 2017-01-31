@@ -11,9 +11,9 @@ II=include/
 HFILES = $(II)rccrypt.h
 
 #define your objects
-RCC_OBJECTS = $(src)rcc.o $(src)bail.o $(src)random_char.o \
+RCCRYPT_BG_OBJECTS = $(src)rccrypt_bg.o $(src)bail.o $(src)random_char.o \
 	$(src)get_remainder.o $(src)rotate.o $(src)debug.o
-	
+
 RCCRYPT_OBJECTS = $(src)rccrypt.o $(src)bail.o $(src)debug.o
 
 #define Compiler flags
@@ -29,15 +29,15 @@ DD = -DNDEBUG
 OO = -O1
 
 #define link flags
-LDFLAGS = 
+LDFLAGS =
 
-all : rccrypt rcc
+all : rccrypt rccrypt_bg
 
 rccrypt : $(RCCRYPT_OBJECTS)
 	$(CC) $(RCCRYPT_OBJECTS) $(LDFLAGS) -o rccrypt
 
-rcc : $(RCC_OBJECTS)
-	$(CC) $(RCC_OBJECTS) $(LDFLAGS) -o rcc
+rccrypt_bg : $(RCCRYPT_BG_OBJECTS)
+	$(CC) $(RCCRYPT_BG_OBJECTS) $(LDFLAGS) -o rccrypt_bg
 
 
 #define a default compilation thing

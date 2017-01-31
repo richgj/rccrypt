@@ -372,8 +372,8 @@ setsid();
 	if (0 == pid)
 	{
 		/* this is the child */
-		/* rcc must be found in the PATH */
-		execlp("rcc", "rcc", NULL);
+		/* rccrypt_bg must be found in the PATH */
+		execlp("rccrypt_bg", "rccrypt_bg", NULL);
 		/* note - it should never return from this call */
 		bail("Failed to start rcc as child process");
 	}
